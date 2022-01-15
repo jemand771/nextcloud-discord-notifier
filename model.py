@@ -5,12 +5,12 @@ from dataclasses import dataclass
 class EventData:
 
     user_name: str
+    display_name: str
     action: str
     file_id: str
     file_path: str
     parent_activity_id: int
 
-    display_name: str = None
     file_url: str = None
     folder_url: str = None
 

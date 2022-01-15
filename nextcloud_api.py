@@ -79,9 +79,13 @@ class Nextcloud:
 
     @staticmethod
     def shallow_events_from_activity(activity):
+        display_name = activity.get("user")
+        if user := activity.get("subject_rich")[1].get("user"):
+            display_name = user.get("name")
         return [
             EventData(
                 user_name=activity.get("user"),
+                display_name=display_name,
                 action=activity.get("type"),
                 file_id=file_id,
                 file_path=file_path,
@@ -92,7 +96,6 @@ class Nextcloud:
         ]
 
     def load_event_data(self, event: EventData):
-        event.display_name = "display-name"
         return event
 
     def url_for(self, file_path, file_id=None, file_name=None):
