@@ -9,7 +9,7 @@ import requests
 import webdav3.client
 from parameterized import parameterized
 
-from common import expand_single, flatten
+from .common import expand_single, flatten
 import nextcloud_api
 
 
