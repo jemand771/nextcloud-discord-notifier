@@ -69,7 +69,8 @@ class NextcloudTest(unittest.TestCase):
         nextcloud_url = f"http://localhost:{host_port}"
         for _ in range(20):
             try:
-                assert requests.get(nextcloud_url).status_code == 200
+                r = requests.get(nextcloud_url)
+                assert r.status_code == 200, f"nextcloud not OK - {r.status_code}"
                 break
             except requests.exceptions.ConnectionError:
                 time.sleep(0.5)
