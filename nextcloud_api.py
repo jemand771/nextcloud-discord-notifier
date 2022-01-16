@@ -32,13 +32,19 @@ class Nextcloud:
         return r.json().get("ocs").get("data")
 
     def fetch_activities(self, limit, start_index=0):
-        events = self.ocs(
-            "activity/api/v2/activity/all",
-            params={
-                "previews": "true",
-                "since": start_index
-            }
-        )
+        try:
+            events = self.ocs(
+                "activity/api/v2/activity/all",
+                params={
+                    "previews": "true",
+                    "since": start_index
+                }
+            )
+        # catch HTTP 304 (no activity)
+        except AssertionError as e:
+            if str(e).endswith("returned status code 304"):
+                return []
+            raise
         if len(events) >= limit:
             return events[:limit]
         return events + self.fetch_activities(limit - len(events), start_index=events[-1].get("activity_id"))
