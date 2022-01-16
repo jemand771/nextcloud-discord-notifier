@@ -1,3 +1,4 @@
+import os
 import time
 import unittest
 from tempfile import TemporaryDirectory
@@ -45,6 +46,7 @@ class NextcloudTest(unittest.TestCase):
 
     def setUp(self):
         self.config_dir = TemporaryDirectory()
+        os.chmod(self.config_dir.name, 0o777)
         self.prepare_config_file(f"{self.config_dir.name}/custom.config.php")
 
         self.docker_client = docker.from_env()
