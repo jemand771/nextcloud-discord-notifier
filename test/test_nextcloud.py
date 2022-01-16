@@ -24,7 +24,6 @@ class DavClient:
             }
         )
 
-    # TODO make remote path optional by deducing file name from local path?
     def upload_file(self, local_path, remote_path):
         self.client.upload_sync(local_path=local_path, remote_path=remote_path)
 
