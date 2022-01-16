@@ -34,7 +34,7 @@ class Nextcloud:
     def fetch_activities(self, limit, start_index=0):
         try:
             events = self.ocs(
-                "activity/api/v2/activity/all",
+                "activity/api/v2/activity/files",
                 params={
                     "previews": "true",
                     "since": start_index
@@ -98,7 +98,6 @@ class Nextcloud:
                 parent_activity_id=activity.get("activity_id")
             )
             for file_id, file_path in activity.get("objects").items()
-            if activity.get("app") == "files"
         ]
 
     def load_event_data(self, event: EventData):
