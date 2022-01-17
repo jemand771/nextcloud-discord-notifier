@@ -12,6 +12,7 @@ from model import EventData
 class Nextcloud:
     _reshare_cache = None
     detail_resolvers = []
+    DOWNLOADABLE_ACTIONS = ("file_created", "file_changed")
 
     def __init__(self, base_url, username, password):
         self._base_url = base_url
@@ -114,18 +115,19 @@ class Nextcloud:
         ]
 
     def load_event_data(self, event: EventData):
-        with TemporaryDirectory() as download_dir:
-            target_path = f"{download_dir}/{event.file_name}"
-            r = requests.get(self.create_direct_link(event.file_id))
-            assert r.status_code == 200, f"direct download of fileId {event.file_id} failed"
-            with open(target_path, "wb") as f:
-                f.write(r.content)
-            event.additional_info = []
-            for resolver_class in self.detail_resolvers:
-                resolver: detail_resolvers.DetailResolver = resolver_class(target_path)
-                if not resolver.is_relevant():
-                    continue
-                event.additional_info.append(resolver.get_field_dict())
+        if event.action in self.DOWNLOADABLE_ACTIONS:
+            with TemporaryDirectory() as download_dir:
+                target_path = f"{download_dir}/{event.file_name}"
+                r = requests.get(self.create_direct_link(event.file_id))
+                assert r.status_code == 200, f"direct download of fileId {event.file_id} failed"
+                with open(target_path, "wb") as f:
+                    f.write(r.content)
+                event.additional_info = []
+                for resolver_class in self.detail_resolvers:
+                    resolver: detail_resolvers.DetailResolver = resolver_class(target_path)
+                    if not resolver.is_relevant():
+                        continue
+                    event.additional_info.append(resolver.get_field_dict())
         return event
 
     def create_direct_link(self, file_id):

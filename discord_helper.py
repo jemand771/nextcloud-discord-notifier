@@ -27,7 +27,7 @@ def create_event_embed(data: EventData):
         description=desc
     )
 
-    for field in data.additional_info:
+    for field in data.additional_info or []:
         embed.add_embed_field(**field)
 
     embed.set_author(name=data.user_name)
