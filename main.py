@@ -33,7 +33,7 @@ class Bot:
         return [
             event
             for activity in reversed(self.nextcloud.fetch_activities(limit=3))
-            for event in self.nextcloud.shallow_events_from_activity(activity)
+            for event in reversed(self.nextcloud.shallow_events_from_activity(activity))
         ]
 
     def load_event_data(self, events):
