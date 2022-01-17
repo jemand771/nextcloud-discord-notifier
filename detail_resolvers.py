@@ -1,4 +1,7 @@
+import os
 import re
+
+import humanize
 
 
 class DetailResolver:
@@ -22,3 +25,11 @@ class DetailResolver:
 
     def resolve_detail(self, file_path):
         pass
+
+
+class FileSizeResolver(DetailResolver):
+    display_name = "File size"
+
+    def resolve_detail(self, file_path):
+        size = os.path.getsize(file_path)
+        return humanize.naturalsize(size)
