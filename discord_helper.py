@@ -27,14 +27,11 @@ def create_event_embed(data: EventData):
         description=desc
     )
 
-    add_embed_info_fields(embed, data)
+    for field in data.additional_info:
+        embed.add_embed_field(**field)
 
     embed.set_author(name=data.user_name)
     return embed
-
-
-def add_embed_info_fields(embed: DiscordEmbed, data: EventData):
-    embed.add_embed_field(name="foo", value="bar")
 
 
 def language_format(actor, action, file, folder):
