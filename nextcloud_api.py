@@ -1,40 +1,15 @@
-from tempfile import TemporaryDirectory
-import re
+import inspect
 import urllib.parse
+from tempfile import TemporaryDirectory
 
 import requests
 import requests.auth
 
+import detail_resolvers
 from model import EventData
 
 
-class DetailResolver:
-
-    file_name_regex = ".*"
-    display_name = "ERR_NO_NAME"
-    is_inline = True
-    priority = 0
-
-    def __init__(self, file_path):
-        self._file_path = file_path
-
-    def is_relevant(self):
-        return bool(re.match(self.file_name_regex, self._file_path))
-
-    def get_field_dict(self):
-        return {
-            "name": self.display_name,
-            "value": self.resolve_detail(self._file_path),
-            "inline": self.is_inline
-        }
-
-    @staticmethod
-    def resolve_detail(file_path):
-        pass
-
-
 class Nextcloud:
-
     _reshare_cache = None
     detail_resolvers = []
 
@@ -44,8 +19,13 @@ class Nextcloud:
         self.import_detail_resolvers()
 
     def import_detail_resolvers(self):
-        # TODO dynamically import resolvers from different file
-        pass
+        for name, obj in inspect.getmembers(detail_resolvers):
+            if (
+                    inspect.isclass(obj)
+                    and issubclass(obj, detail_resolvers.DetailResolver)
+                    and obj != detail_resolvers.DetailResolver
+            ):
+                self.detail_resolvers.append(obj)
 
     def ocs(self, path, request_type=requests.get, headers=None, params=None, **kwargs):
         r = request_type(
@@ -141,7 +121,7 @@ class Nextcloud:
             with open(target_path, "wb") as f:
                 f.write(r.content)
             for resolver_class in self.detail_resolvers:
-                resolver: DetailResolver = resolver_class(target_path)
+                resolver: detail_resolvers.DetailResolver = resolver_class(target_path)
                 if not resolver.is_relevant():
                     continue
                 event.additional_info.append(resolver.get_field_dict())
