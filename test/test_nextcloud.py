@@ -8,10 +8,9 @@ from tempfile import TemporaryDirectory
 import docker
 import requests
 import webdav3.client
-from parameterized import parameterized
 
-from .common import expand_single, flatten
 import nextcloud_api
+from .common import expand_single, flatten
 
 
 class DavClient:
@@ -123,3 +122,41 @@ class NextcloudTest(unittest.TestCase):
         activities = self.nextcloud.fetch_activities(limit=2 * self.EVENTS_PER_ACTIVITY * num_events)
         events = flatten(self.nextcloud.shallow_events_from_activity(activity) for activity in activities)
         self.assertEqual(len(events), num_events)
+
+    def test_direct_download(self):
+        self.dav.make_txt_file("file.txt", content=(file_content := "hellowo"))
+        event = self.nextcloud.shallow_events_from_activity(
+            self.nextcloud.fetch_activities(limit=1)[0]
+        )[0]
+        url = self.nextcloud.create_direct_link(event.file_id)
+        r = requests.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.text, file_content)
+
+    def test_field_resolution(self):
+        self.dav.make_txt_file(file_name := "file.txt")
+        from nextcloud_api import DetailResolver
+
+        class TestResolver(DetailResolver):
+
+            display_name = "file name"
+
+            @staticmethod
+            def resolve_detail(file_path):
+                return file_path.rsplit("/", 1)[-1]
+
+        self.nextcloud.detail_resolvers = [TestResolver]
+        event = self.nextcloud.shallow_events_from_activity(
+            self.nextcloud.fetch_activities(limit=1)[0]
+        )[0]
+        fields = self.nextcloud.load_event_data(event).additional_info
+        self.assertEqual(fields, [{
+            "name": TestResolver.display_name,
+            "value": file_name,
+            "inline": TestResolver.is_inline
+        }])
+
+
+class NextcloudResolverTest:
+    # TODO test different resolvers locally, without the need for an actual nextcloud
+    pass

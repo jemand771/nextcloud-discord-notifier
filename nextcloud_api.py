@@ -1,3 +1,5 @@
+from tempfile import TemporaryDirectory
+import re
 import urllib.parse
 
 import requests
@@ -6,13 +8,44 @@ import requests.auth
 from model import EventData
 
 
+class DetailResolver:
+
+    file_name_regex = ".*"
+    display_name = "ERR_NO_NAME"
+    is_inline = True
+    priority = 0
+
+    def __init__(self, file_path):
+        self._file_path = file_path
+
+    def is_relevant(self):
+        return bool(re.match(self.file_name_regex, self._file_path))
+
+    def get_field_dict(self):
+        return {
+            "name": self.display_name,
+            "value": self.resolve_detail(self._file_path),
+            "inline": self.is_inline
+        }
+
+    @staticmethod
+    def resolve_detail(file_path):
+        pass
+
+
 class Nextcloud:
 
     _reshare_cache = None
+    detail_resolvers = []
 
     def __init__(self, base_url, username, password):
         self._base_url = base_url
         self._auth = requests.auth.HTTPBasicAuth(username, password)
+        self.import_detail_resolvers()
+
+    def import_detail_resolvers(self):
+        # TODO dynamically import resolvers from different file
+        pass
 
     def ocs(self, path, request_type=requests.get, headers=None, params=None, **kwargs):
         r = request_type(
@@ -101,7 +134,28 @@ class Nextcloud:
         ]
 
     def load_event_data(self, event: EventData):
+        with TemporaryDirectory() as download_dir:
+            target_path = f"{download_dir}/{event.file_name}"
+            r = requests.get(self.create_direct_link(event.file_id))
+            assert r.status_code == 200, f"direct download of fileId {event.file_id} failed"
+            with open(target_path, "wb") as f:
+                f.write(r.content)
+            for resolver_class in self.detail_resolvers:
+                resolver: DetailResolver = resolver_class(target_path)
+                if not resolver.is_relevant():
+                    continue
+                event.additional_info.append(resolver.get_field_dict())
         return event
+
+    def create_direct_link(self, file_id):
+        r = self.ocs(
+            "dav/api/v1/direct",
+            request_type=requests.post,
+            params={
+                "fileId": file_id
+            }
+        )
+        return r.get("url")
 
     def url_for(self, file_path, file_id=None, file_name=None):
         # TODO opening files just doesn't work?? -> ignore for now

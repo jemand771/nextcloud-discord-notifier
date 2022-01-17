@@ -5,9 +5,6 @@ import discord_helper
 from nextcloud_api import Nextcloud
 
 
-# direct: https://cloud.clnp.eu/ocs/v2.php/apps/dav/api/v1/direct?fileId=1190853
-
-
 class Bot:
     known_activity_keys = []
     should_run = True
