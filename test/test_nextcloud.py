@@ -135,14 +135,13 @@ class NextcloudTest(unittest.TestCase):
 
     def test_field_resolution(self):
         self.dav.make_txt_file(file_name := "file.txt")
-        from nextcloud_api import DetailResolver
+        from detail_resolvers import DetailResolver
 
         class TestResolver(DetailResolver):
 
             display_name = "file name"
 
-            @staticmethod
-            def resolve_detail(file_path):
+            def resolve_detail(self, file_path):
                 return file_path.rsplit("/", 1)[-1]
 
         self.nextcloud.detail_resolvers = [TestResolver]
