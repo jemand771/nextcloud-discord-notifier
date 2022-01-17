@@ -9,9 +9,10 @@ class Bot:
     known_activity_keys = []
     should_run = True
 
-    def __init__(self, nextcloud, fetch_limit):
+    def __init__(self, nextcloud, fetch_limit, action_blacklist=None):
         self.nextcloud = nextcloud
         self.fetch_limit = fetch_limit
+        self.action_blacklist = action_blacklist or []
 
     def run_once(self, init=False):
         events = self.get_events()
@@ -35,6 +36,7 @@ class Bot:
             event
             for activity in reversed(self.nextcloud.fetch_activities(limit=self.fetch_limit))
             for event in reversed(self.nextcloud.shallow_events_from_activity(activity))
+            if event.action not in self.action_blacklist
         ]
 
     def load_event_data(self, events):
@@ -71,13 +73,17 @@ def int_from_env(name, default):
 def main():
     sleep_time = int_from_env("SLEEP_TIME", 10)
     fetch_limit = int_from_env("FETCH_LIMIT", 20)
+    action_blacklist = os.environ.get("ACTION_BLACKLIST")
+    if action_blacklist:
+        action_blacklist = action_blacklist.split(",")
     bot = Bot(
         nextcloud=Nextcloud(
             base_url=os.environ.get("NEXTCLOUD_URL"),
             username=os.environ.get("NEXTCLOUD_USERNAME"),
             password=os.environ.get("NEXTCLOUD_PASSWORD")
         ),
-        fetch_limit=fetch_limit
+        fetch_limit=fetch_limit,
+        action_blacklist=action_blacklist
     )
     bot.loop(sleep_time)
 
