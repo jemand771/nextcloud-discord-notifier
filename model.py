@@ -13,7 +13,7 @@ class EventData:
 
     file_url: str = None
     folder_url: str = None
-    additional_info = []
+    additional_info = None
 
     @property
     def key(self):

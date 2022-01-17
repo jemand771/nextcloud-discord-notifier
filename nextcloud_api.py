@@ -120,6 +120,7 @@ class Nextcloud:
             assert r.status_code == 200, f"direct download of fileId {event.file_id} failed"
             with open(target_path, "wb") as f:
                 f.write(r.content)
+            event.additional_info = []
             for resolver_class in self.detail_resolvers:
                 resolver: detail_resolvers.DetailResolver = resolver_class(target_path)
                 if not resolver.is_relevant():
