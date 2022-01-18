@@ -10,6 +10,7 @@ class EventData:
     file_id: str
     file_path: str
     parent_activity_id: int
+    iso_timestamp: str
 
     file_url: str = None
     folder_url: str = None

@@ -109,7 +109,8 @@ class Nextcloud:
                 action=activity.get("type"),
                 file_id=file_id,
                 file_path=file_path,
-                parent_activity_id=activity.get("activity_id")
+                parent_activity_id=activity.get("activity_id"),
+                iso_timestamp=activity.get("datetime")
             )
             for file_id, file_path in activity.get("objects").items()
         ]

@@ -24,8 +24,10 @@ def create_event_embed(data: EventData):
         color=action_to_color(data.action),
         title=data.file_name,
         url=data.file_url,
-        description=desc
+        description=desc,
+        timestamp=data.iso_timestamp
     )
+    embed.set_footer(text=f"id: {data.key}")
 
     for field in data.additional_info or []:
         embed.add_embed_field(**field)

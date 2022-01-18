@@ -19,7 +19,8 @@ class Bot:
         if init:
             self.known_activity_keys.extend(event.key for event in events)
             return
-        self.send_events(self.load_event_data(events))
+        self.load_event_data(events)
+        self.send_events(events)
 
     def loop(self, sleep_time):
         self.run_once(init=True)
