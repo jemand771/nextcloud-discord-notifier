@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import os
 import time
 import unittest
@@ -154,6 +155,16 @@ class NextcloudTest(unittest.TestCase):
             "value": file_name,
             "inline": TestResolver.is_inline
         }])
+
+    def test_event_timestamp(self):
+        self.dav.make_txt_file("file.txt")
+        event = self.nextcloud.shallow_events_from_activity(
+            self.nextcloud.fetch_activities(limit=1)[0]
+        )[0]
+        event_time = datetime.fromisoformat(event.iso_timestamp)
+        delay = datetime.now().astimezone() - event_time
+        self.assertGreater(delay.total_seconds(), 0)
+        self.assertLess(delay.total_seconds(), 10)
 
 
 class NextcloudResolverTest:
