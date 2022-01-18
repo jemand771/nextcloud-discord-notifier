@@ -165,8 +165,3 @@ class NextcloudTest(unittest.TestCase):
         delay = datetime.now().astimezone() - event_time
         self.assertGreater(delay.total_seconds(), 0)
         self.assertLess(delay.total_seconds(), 10)
-
-
-class NextcloudResolverTest:
-    # TODO test different resolvers locally, without the need for an actual nextcloud
-    pass
