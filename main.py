@@ -20,7 +20,9 @@ class Bot:
         if init:
             self.known_activity_keys.extend(event.key for event in events)
             return
-        self.load_event_data(events)
+        # this is split into multiple statements to make debugging easier
+        events = self.filter_events(events)
+        events = self.load_event_data(events)
         self.send_events(events)
 
     def loop(self, sleep_time):
@@ -41,12 +43,17 @@ class Bot:
             if event.action not in self.action_blacklist
         ]
 
+    def filter_events(self, events):
+        return [
+            event for event in events
+            if event.key not in self.known_activity_keys
+        ]
+
     def load_event_data(self, events):
         return [
             self.nextcloud.load_event_data(event)
             for event
             in events
-            if event.key not in self.known_activity_keys
         ]
 
     def send_events(self, events):
