@@ -15,7 +15,8 @@ class Bot:
         self.action_blacklist = action_blacklist or []
 
     def run_once(self, init=False):
-        events = self.get_events()
+        # fetch some more on init to avoid weird grouping issues
+        events = self.get_events(self.fetch_limit + 10 * init)
         if init:
             self.known_activity_keys.extend(event.key for event in events)
             return
@@ -31,11 +32,11 @@ class Bot:
                     return
                 time.sleep(1)
 
-    def get_events(self):
+    def get_events(self, fetch_limit):
         self.nextcloud.update_reshare_cache()
         return [
             event
-            for activity in reversed(self.nextcloud.fetch_activities(limit=self.fetch_limit))
+            for activity in reversed(self.nextcloud.fetch_activities(limit=fetch_limit))
             for event in reversed(self.nextcloud.shallow_events_from_activity(activity))
             if event.action not in self.action_blacklist
         ]
