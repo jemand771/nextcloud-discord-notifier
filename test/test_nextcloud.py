@@ -1,4 +1,3 @@
-from datetime import datetime
 import os
 import time
 import unittest
@@ -97,6 +96,19 @@ class NextcloudTest(unittest.TestCase):
         self.config_dir.cleanup()
         self.docker_client.close()
 
+    def get_events_shallow(self, limit=100):
+        return [
+            event
+            for activity in self.nextcloud.fetch_activities(limit=limit)
+            for event in self.nextcloud.shallow_events_from_activity(activity)
+        ]
+
+    def get_events(self, limit=100):
+        return [
+            self.nextcloud.load_event_data(event)
+            for event in self.get_events_shallow(limit=limit)
+        ]
+
     def test_no_activity(self):
         activities = self.nextcloud.fetch_activities(limit=3)
         self.assertIsInstance(activities, list)
@@ -105,9 +117,7 @@ class NextcloudTest(unittest.TestCase):
     def test_activity_event_grouping(self):
         for i in range(self.EVENTS_PER_ACTIVITY + 1):
             self.dav.make_txt_file(f"test-{i}.txt")
-        events = self.nextcloud.shallow_events_from_activity(
-            self.nextcloud.fetch_activities(limit=1)[0]
-        )
+        events = self.get_events_shallow(limit=1)
         self.assertEqual(len(events), self.EVENTS_PER_ACTIVITY)
 
     @expand_single(range(3))
@@ -121,15 +131,12 @@ class NextcloudTest(unittest.TestCase):
     def test_simple_event_count(self, num_events):
         for i in range(num_events):
             self.dav.make_txt_file(f"test-{i}.txt")
-        activities = self.nextcloud.fetch_activities(limit=2 * self.EVENTS_PER_ACTIVITY * num_events)
-        events = flatten(self.nextcloud.shallow_events_from_activity(activity) for activity in activities)
+        events = self.get_events_shallow(limit=2 * self.EVENTS_PER_ACTIVITY * num_events)
         self.assertEqual(len(events), num_events)
 
     def test_direct_download(self):
         self.dav.make_txt_file("file.txt", content=(file_content := "hellowo"))
-        event = self.nextcloud.shallow_events_from_activity(
-            self.nextcloud.fetch_activities(limit=1)[0]
-        )[0]
+        event = self.get_events_shallow()[0]
         url = self.nextcloud.create_direct_link(event.file_id)
         r = requests.get(url)
         self.assertEqual(r.status_code, 200)
@@ -140,16 +147,13 @@ class NextcloudTest(unittest.TestCase):
         from detail_resolvers import DetailResolver
 
         class TestResolver(DetailResolver):
-
             display_name = "file name"
 
             def resolve_detail(self, file_path):
                 return file_path.rsplit("/", 1)[-1]
 
         self.nextcloud.detail_resolvers = [TestResolver]
-        event = self.nextcloud.shallow_events_from_activity(
-            self.nextcloud.fetch_activities(limit=1)[0]
-        )[0]
+        event = self.get_events_shallow()[0]
         fields = self.nextcloud.load_event_data(event).additional_info
         self.assertEqual(
             fields, [{
@@ -161,9 +165,7 @@ class NextcloudTest(unittest.TestCase):
 
     def test_event_timestamp(self):
         self.dav.make_txt_file("file.txt")
-        event = self.nextcloud.shallow_events_from_activity(
-            self.nextcloud.fetch_activities(limit=1)[0]
-        )[0]
+        event = self.get_events_shallow()[0]
         event_time = datetime.fromisoformat(event.iso_timestamp)
         delay = datetime.now().astimezone() - event_time
         self.assertGreater(delay.total_seconds(), 0)
