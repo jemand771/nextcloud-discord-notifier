@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 import time
 import unittest
+from datetime import datetime
 from tempfile import TemporaryDirectory
 
 # NOTE to use this with docker desktop, enable the exposing option there and set
@@ -150,11 +151,13 @@ class NextcloudTest(unittest.TestCase):
             self.nextcloud.fetch_activities(limit=1)[0]
         )[0]
         fields = self.nextcloud.load_event_data(event).additional_info
-        self.assertEqual(fields, [{
-            "name": TestResolver.display_name,
-            "value": file_name,
-            "inline": TestResolver.is_inline
-        }])
+        self.assertEqual(
+            fields, [{
+                "name": TestResolver.display_name,
+                "value": file_name,
+                "inline": TestResolver.is_inline
+            }]
+        )
 
     def test_event_timestamp(self):
         self.dav.make_txt_file("file.txt")
