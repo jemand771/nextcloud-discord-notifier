@@ -18,7 +18,7 @@ class EventData:
 
     @property
     def key(self):
-        return f"{self.action}/{self.file_id}" + f"/{self.parent_activity_id}" if self.action == "file_changed" else ""
+        return f"{self.action}/{self.file_id}" + (f"/{self.parent_activity_id}" if self.action == "file_changed" else "")
 
     @property
     def file_name(self):
