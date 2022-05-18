@@ -117,13 +117,17 @@ class Nextcloud:
 
     def load_event_data(self, event: EventData):
         if event.action in self.DOWNLOADABLE_ACTIONS:
-            with TemporaryDirectory() as download_dir:
-                target_path = f"{download_dir}/{event.file_name}"
+            event.additional_info = []
+            try:
                 r = requests.get(self.create_direct_link(event.file_id))
                 assert r.status_code == 200, f"direct download of fileId {event.file_id} failed"
+            except AssertionError as e:
+                print(e)
+                return event
+            with TemporaryDirectory() as download_dir:
+                target_path = f"{download_dir}/{event.file_name}"
                 with open(target_path, "wb") as f:
                     f.write(r.content)
-                event.additional_info = []
                 for resolver_class in self.detail_resolvers:
                     resolver: detail_resolvers.DetailResolver = resolver_class(target_path)
                     if not resolver.is_relevant():
